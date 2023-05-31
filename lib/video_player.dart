@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoPlayerScreen extends StatelessWidget {
@@ -9,11 +10,16 @@ class VideoPlayerScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SafeArea(
+    return SafeArea(
       child: Scaffold(
-        body: VideoPlayerView(
-          dataSourceType: DataSourceType.asset,
-          url: 'assets/sample_video.mp4',
+        body: Column(
+          children: const [
+            VideoPlayerView(
+              dataSourceType: DataSourceType.asset,
+              url: 'assets/sample_video.mp4',
+            ),
+            SelectVideo()
+          ],
         ),
       ),
     );
@@ -59,11 +65,15 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
         break;
     }
 
-    _chewieController = ChewieController(
-        autoInitialize: true,
-        videoPlayerController: _videoPlayerController,
-        aspectRatio: 16 / 9,
-        showControlsOnInitialize: false);
+    _videoPlayerController.initialize().then(
+          (_) => setState(
+            () => _chewieController = ChewieController(
+                autoInitialize: true,
+                videoPlayerController: _videoPlayerController,
+                aspectRatio: _videoPlayerController.value.aspectRatio,
+                showControlsOnInitialize: false),
+          ),
+        );
   }
 
   @override
@@ -79,8 +89,49 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
       padding: const EdgeInsets.only(top: 20),
       child: SizedBox(
         height: 200,
-        child: Chewie(controller: _chewieController),
+        width: double.infinity,
+        child: _videoPlayerController.value.isInitialized
+            ? AspectRatio(
+                aspectRatio: _videoPlayerController.value.aspectRatio,
+                child: Chewie(controller: _chewieController),
+              )
+            : const SizedBox.shrink(),
       ),
+    );
+  }
+}
+
+class SelectVideo extends StatefulWidget {
+  const SelectVideo({super.key});
+
+  @override
+  State<SelectVideo> createState() => _SelectVideoState();
+}
+
+class _SelectVideoState extends State<SelectVideo> {
+  File? _file;
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        TextButton(
+          onPressed: () async {
+            final file =
+                await ImagePicker().pickVideo(source: ImageSource.gallery);
+            if (file != null) {
+              setState(() {
+                _file = File(file.path);
+              });
+            }
+          },
+          child: const Text('Select video'),
+        ),
+        if (_file != null)
+          VideoPlayerView(
+            dataSourceType: DataSourceType.file,
+            url: _file!.path,
+          ),
+      ],
     );
   }
 }
