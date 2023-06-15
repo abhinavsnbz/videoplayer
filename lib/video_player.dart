@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:video_editor/video_editor.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoPlayerScreen extends StatelessWidget {
@@ -109,7 +110,17 @@ class SelectVideo extends StatefulWidget {
 }
 
 class _SelectVideoState extends State<SelectVideo> {
+  late VideoEditorController _videoEditorController;
   File? _file;
+
+  // final _videoEditorController = VideoEditorController.file(_file!.path);
+
+  @override
+  void dispose() {
+    _videoEditorController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -127,9 +138,19 @@ class _SelectVideoState extends State<SelectVideo> {
           child: const Text('Select video'),
         ),
         if (_file != null)
-          VideoPlayerView(
-            dataSourceType: DataSourceType.file,
-            url: _file!.path,
+          Column(
+            children: [
+              VideoPlayerView(
+                dataSourceType: DataSourceType.file,
+                url: _file!.path,
+              ),
+              TextButton(
+                onPressed: () {
+        
+                },
+                child: const Text('Tap to edit'),
+              ),
+            ],
           ),
       ],
     );

@@ -33,15 +33,12 @@ dependencies:
   flutter:
     sdk: flutter
   image_picker: ^0.8.7+5
+
   video_player: null
+  flutter_ffmpeg: ^0.4.2
+  video_editor: ^2.4.0
 
 dev_dependencies:
-
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
   flutter_lints: ^2.0.0
   flutter_test:
     sdk: flutter
