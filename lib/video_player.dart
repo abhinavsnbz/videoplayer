@@ -110,10 +110,8 @@ class SelectVideo extends StatefulWidget {
 }
 
 class _SelectVideoState extends State<SelectVideo> {
-  late VideoEditorController _videoEditorController;
   File? _file;
-
-  // final _videoEditorController = VideoEditorController.file(_file!.path);
+  late VideoEditorController _videoEditorController;
 
   @override
   void dispose() {
@@ -146,13 +144,32 @@ class _SelectVideoState extends State<SelectVideo> {
               ),
               TextButton(
                 onPressed: () {
-        
+                  _videoEditorController = VideoEditorController.file(_file!);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          VideoEditorScreen(controller: _videoEditorController),
+                    ),
+                  );
                 },
                 child: const Text('Tap to edit'),
               ),
             ],
           ),
       ],
+    );
+  }
+}
+
+class VideoEditorScreen extends StatelessWidget {
+  final VideoEditorController controller;
+  const VideoEditorScreen({super.key, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return  Scaffold(
+      body: VideoEditor(),
     );
   }
 }

@@ -33,10 +33,10 @@ dependencies:
   flutter:
     sdk: flutter
   image_picker: ^0.8.7+5
-
-  video_player: null
-  flutter_ffmpeg: ^0.4.2
   video_editor: ^2.4.0
+  video_player: null
+  
+
 
 dev_dependencies:
   flutter_lints: ^2.0.0
