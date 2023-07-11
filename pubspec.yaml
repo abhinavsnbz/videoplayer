@@ -30,13 +30,12 @@ environment:
 dependencies:
   chewie: ^1.5.0
   cupertino_icons: ^1.0.2
+  file_picker: null
   flutter:
     sdk: flutter
-  image_picker: ^0.8.7+5
-  video_editor: ^2.4.0
-  video_player: null
-  
-
+  image_picker: ^1.0.0
+  video_editor: ^3.0.0
+  video_trimmer: null
 
 dev_dependencies:
   flutter_lints: ^2.0.0

@@ -44,6 +44,7 @@ class VideoPlayerView extends StatefulWidget {
 class _VideoPlayerViewState extends State<VideoPlayerView> {
   late VideoPlayerController _videoPlayerController;
   late ChewieController _chewieController;
+  // late VideoEditorController _videoEditorController;
 
   @override
   void initState() {
@@ -111,11 +112,17 @@ class SelectVideo extends StatefulWidget {
 
 class _SelectVideoState extends State<SelectVideo> {
   File? _file;
-  late VideoEditorController _videoEditorController;
+  VideoEditorController? _videoEditorController;
+
+  @override
+  void initState() {
+    _videoEditorController?.initialize().then((_) {});
+    super.initState();
+  }
 
   @override
   void dispose() {
-    _videoEditorController.dispose();
+    _videoEditorController!.dispose();
     super.dispose();
   }
 
@@ -145,11 +152,12 @@ class _SelectVideoState extends State<SelectVideo> {
               TextButton(
                 onPressed: () {
                   _videoEditorController = VideoEditorController.file(_file!);
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          VideoEditorScreen(controller: _videoEditorController),
+                      builder: (context) => VideoEditingScreen(
+                          controller: _videoEditorController!),
                     ),
                   );
                 },
@@ -162,14 +170,104 @@ class _SelectVideoState extends State<SelectVideo> {
   }
 }
 
-class VideoEditorScreen extends StatelessWidget {
+class VideoEditingScreen extends StatefulWidget {
+  const VideoEditingScreen({
+    super.key,
+    required this.controller,
+  });
+
   final VideoEditorController controller;
-  const VideoEditorScreen({super.key, required this.controller});
+
+  @override
+  State<VideoEditingScreen> createState() => _VideoEditingScreenState();
+}
+
+class _VideoEditingScreenState extends State<VideoEditingScreen> {
+  late VideoPlayerController _videoPlayerController;
+  late ChewieController _chewieController;
+
+  @override
+  void initState() {
+    super.initState();
+    // _videoPlayerController = VideoPlayerController.file(widget.controller.file);
+
+    _videoPlayerController.initialize().then(
+          (_) => setState(
+            () => _chewieController = ChewieController(
+                autoInitialize: true,
+                videoPlayerController: _videoPlayerController,
+                aspectRatio: _videoPlayerController.value.aspectRatio,
+                showControlsOnInitialize: false),
+          ),
+        );
+  }
+
+  @override
+  void dispose() {
+    _chewieController.dispose();
+    _videoPlayerController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return  Scaffold(
-      body: VideoEditor(),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Video Editing'),
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 20),
+            child: SizedBox(
+              height: 200,
+              width: double.infinity,
+              child: _videoPlayerController.value.isInitialized
+                  ? AspectRatio(
+                      aspectRatio: _videoPlayerController.value.aspectRatio,
+                      child: Chewie(controller: _chewieController),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ),
+          Row(
+            children: [
+              TextButton(
+                onPressed: () {
+                  widget.controller.updateTrim(
+                    0.1,
+                    1.0,
+                  );
+                },
+                child: const Text('Trim'),
+              ),
+              TextButton(
+                onPressed: () {
+                  widget.controller.updateCrop(
+                    Offset.zero,
+                    const Offset(1, 0),
+                  );
+                },
+                child: const Text('Crop'),
+              ),
+              TextButton(
+                onPressed: () {
+                  widget.controller.rotate90Degrees();
+                },
+                child: const Text('Rotate'),
+              ),
+            ],
+          ),
+          // TextButton(
+          //   onPressed: () {
+          //     widget.controller.exportVideo(onCompleted: (path) {
+          //       print(path);
+          //     });
+          //   },
+          //   child: const Text('Export'),
+          // ),
+        ],
+      ),
     );
   }
 }
