@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:video_compress/video_compress.dart';
 import 'package:video_trimmer/video_trimmer.dart';
 
 class VideoTrimmer extends StatelessWidget {
@@ -50,7 +51,8 @@ class _TrimmerViewState extends State<TrimmerView> {
   bool _progressVisibility = false;
   double _startValue = 0.0;
   double _endValue = 0.0;
-
+  bool _isMuted = false;
+  String? _originalVideoPath;
 
   Future<String?> _saveVideo() async {
     setState(() {
@@ -75,6 +77,27 @@ class _TrimmerViewState extends State<TrimmerView> {
     return value;
   }
 
+  Future<String?> _removeAudio(File videoFile) async {
+    final info = await VideoCompress.compressVideo(
+      videoFile.path,
+      deleteOrigin: false,
+      includeAudio: false,
+      quality: VideoQuality.DefaultQuality,
+    );
+
+    if (info != null) {
+      return info.path;
+    }
+
+    return null;
+  }
+
+  void _loadOriginalVideo() {
+    if (_originalVideoPath != null) {
+      _trimmer.loadVideo(videoFile: File(_originalVideoPath!));
+    }
+  }
+
   void _loadVideo() {
     _trimmer.loadVideo(videoFile: widget.file);
   }
@@ -83,6 +106,7 @@ class _TrimmerViewState extends State<TrimmerView> {
   void initState() {
     super.initState();
     _loadVideo();
+    _originalVideoPath = widget.file.path;
   }
 
   @override
@@ -91,7 +115,7 @@ class _TrimmerViewState extends State<TrimmerView> {
       body: Builder(
         builder: (context) => Center(
           child: Container(
-            padding: const EdgeInsets.only(bottom: 30.0),
+            padding: const EdgeInsets.only(bottom: 30.0, top: 25),
             color: Colors.black,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -109,8 +133,8 @@ class _TrimmerViewState extends State<TrimmerView> {
                       : () async {
                           _saveVideo().then((outputPath) {
                             print('OUTPUT PATH: $outputPath');
-                            const snackBar = SnackBar(
-                                content: Text('Video Saved'));
+                            const snackBar =
+                                SnackBar(content: Text('Video Saved'));
                             ScaffoldMessenger.of(context).showSnackBar(
                               snackBar,
                             );
@@ -145,29 +169,75 @@ class _TrimmerViewState extends State<TrimmerView> {
                         setState(() => _isPlaying = value),
                   ),
                 ),
-                TextButton(
-                  child: _isPlaying
-                      ? const Icon(
-                          Icons.pause,
-                          size: 80.0,
-                          color: Colors.white,
-                        )
-                      : const Icon(
-                          Icons.play_arrow,
-                          size: 80.0,
-                          color: Colors.white,
-                        ),
-                  onPressed: () async {
-                    bool playbackState = await _trimmer.videoPlaybackControl(
-                      startValue: _startValue,
-                      endValue: _endValue,
-                    );
-                    setState(
-                      () {
-                        _isPlaying = playbackState;
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      child: _isPlaying
+                          ? const Icon(
+                              Icons.pause,
+                              size: 50.0,
+                              color: Colors.white,
+                            )
+                          : const Icon(
+                              Icons.play_arrow,
+                              size: 50.0,
+                              color: Colors.white,
+                            ),
+                      onPressed: () async {
+                        bool playbackState =
+                            await _trimmer.videoPlaybackControl(
+                          startValue: _startValue,
+                          endValue: _endValue,
+                        );
+                        setState(
+                          () {
+                            _isPlaying = playbackState;
+                          },
+                        );
                       },
-                    );
-                  },
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        if (_progressVisibility) return;
+
+                        setState(() {
+                          _progressVisibility = true;
+                        });
+
+                        if (_isMuted) {
+                          _loadOriginalVideo();
+                          setState(() {
+                            _isMuted = false;
+                            _progressVisibility = false;
+                          });
+                        } else {
+                          final videoWithoutAudioPath =
+                              await _removeAudio(widget.file);
+
+                          if (videoWithoutAudioPath != null) {
+                            _trimmer.loadVideo(
+                                videoFile: File(videoWithoutAudioPath));
+                            setState(() {
+                              _isMuted = true;
+                              _progressVisibility = false;
+                            });
+                          }
+                        }
+                      },
+                      child: _isMuted
+                          ? const Icon(
+                              Icons.volume_up_outlined,
+                              size: 50.0,
+                              color: Colors.white,
+                            )
+                          : const Icon(
+                              Icons.volume_off_outlined,
+                              size: 50.0,
+                              color: Colors.white,
+                            ),
+                    )
+                  ],
                 )
               ],
             ),
